@@ -14,6 +14,7 @@ def blend(a, b, alpha):
         numpy.array: Blended Image.
     """
     # TODO: Your code here
+    return alpha * a + (1. - alpha) * b
 
 dolphin = cv2.imread("images/dolphin.png")
 bicycle = cv2.imread("images/bicycle.png")
