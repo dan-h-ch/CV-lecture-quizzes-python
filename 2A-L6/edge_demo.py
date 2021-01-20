@@ -34,36 +34,40 @@ def LoG(size, sigma):
 
 # Read Lena image
 lenaL = cv2.imread('images/lena.png')
+height, width = lenaL.shape[:2]
 cv2.imshow('Original image, color', lenaL)
 
 # Convert to monochrome (grayscale) using BGR2GRAY.
-lenaMono = None  # TODO: change this line with the call to cv2.cvtColor
+lenaMono = cv2.cvtColor(lenaL, cv2.COLOR_BGR2GRAY)
 cv2.imshow('Original image, monochrome', lenaMono)
 
 # Make a blurred/smoothed version. Use cv2.getGaussianKernel to get the h kernel
-h = None  # TODO: change this line with the call to cv2.getGaussianKernel
-
+# Create a Gaussian filter
+filter_size = 11
+filter_sigma = 4
+h = cv2.getGaussianKernel(filter_size, filter_sigma)
+h = h * h.T
 print( h)
 
 # Mimic Matlab's surf(h)
 surf(h)
 
 # Use cv2.filter2D with BORDER_CONSTANT to get results similar to the Matlab demo
-lenaSmooth = None  # TODO: use cv2.filter2D
+lenaSmooth = cv2.filter2D(lenaMono, -1, h, borderType=cv2.BORDER_CONSTANT)
 cv2.imshow('Smoothed image', lenaSmooth)
 
 # Method 1: Shift left and right, and show diff image
 lenaL = np.copy(lenaSmooth)  # Let's use np.copy to avoid modifying the original array
-# TODO: use numpy indexing to copy and paste the array to the right position
+lenaL[:, :-1] = lenaL[:, 1:]
 
 lenaR = np.copy(lenaSmooth)  # Let's use np.copy to avoid modifying the original array
-# TODO: use numpy indexing to copy and paste the array to the right position
+lenaR[:, 1:] = lenaR[:, :-1]
 
-# TODO: Subtract lenaL from lenaR. Don't forget about using the correct data type
-lenaDiff = None  # Change this line with the answer
+lenaDiff = 1. * lenaR - 1. * lenaL  # Multiplying by 1. as a shortcut to converting array to float
 
 # Here we shift the value range to fit [0, 255] and make sure the data type is uint8 in order to display the results.
-lenaDiff = cv2.normalize(lenaDiff, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+# normalizedImg = np.zeros((height, width))
+lenaDiff = cv2.normalize(lenaDiff, dst=lenaDiff, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 cv2.imshow('Difference between right and left shifted images', lenaDiff.astype(np.uint8))
 
 # Method 2: Canny edge detector
@@ -71,22 +75,22 @@ cv2.imshow('Difference between right and left shifted images', lenaDiff.astype(n
 # OpenCV needs you to specify low and high threshold values. While these are not the
 # exactly the same as the ones used in the demo you should refer to the lines below
 # as a reference on how cv2.Canny works
-thresh1 = 110
-thresh2 = 60
+thresh1 = 60
+thresh2 = 50
 
-cannyEdges = None  # TODO: use cv2.Canny with lenaMono and the thresholds defined above
-cv2.imshow('Original edges', cannyEdges)
+cannyEdges = cv2.Canny(lenaMono, thresh2, thresh1)
+cv2.imshow('Original edges thresh2={thresh2} thresh1={thresh1}'.format(thresh1=thresh1, thresh2=thresh2), cannyEdges)
 
-cannyEdges = None  # TODO: use cv2.Canny with lenaSmooth and the thresholds defined above
-cv2.imshow('Edges of smoothed image', cannyEdges)
+cannyEdges = cv2.Canny(lenaSmooth, thresh2, thresh1)
+cv2.imshow('Edges of smoothed image thresh2={thresh2} thresh1={thresh1}'.format(thresh1=thresh1, thresh2=thresh2), cannyEdges)
 
 # Method 3: Laplacian of Gaussian
 h = LoG(4, 1.)
 surf(h)
 
 # Let's use cv2.filter2D with the new h
-logEdges = None  # TODO: use cv2.filter2D
-logEdgesShow = cv2.normalize(logEdges, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+logEdges = cv2.filter2D(1. * lenaMono, -1, h, borderType=cv2.BORDER_CONSTANT) 
+logEdgesShow = cv2.normalize(logEdges, dst=logEdges, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
 cv2.imshow('Laplacian image before zero crossing', logEdgesShow.astype(np.uint8))
 
